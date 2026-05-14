@@ -58,6 +58,7 @@ function getMetricsData(timing) {
             if (metricName === 'Win Days') metrics.winDays = singleCycle;
             if (metricName === 'Loss Days') metrics.lossDays = singleCycle;
             if (metricName === 'Max Drawdown (Rupees)') metrics.maxDrawdown = singleCycle;
+            if (metricName === 'Total Net Points Captured') metrics.netPoints = singleCycle;
         }
     }
     
@@ -80,36 +81,58 @@ function getChartData(timing) {
 
     const labels = [];
     const pnlData = [];
+    const drawdownData = [];
+    const heatmapRaw = {};
 
-    // The data might have 'Date' and 'Cum_Net_PnL_All' or 'Total_Net_PnL'
-    // Depending on the sheet, we want to construct equity curve
     let cumPnl = 0;
+    let maxPnl = -Infinity;
+
     rawData.forEach(row => {
         if (row.Date) {
             let dateStr = row.Date;
-            // Sometimes date is Excel serial date, xlsx handles if cellType is date, else it's integer
+            let dateObj;
             if (typeof dateStr === 'number') {
-                const date = new Date(Math.round((dateStr - 25569) * 86400 * 1000));
-                dateStr = date.toISOString().split('T')[0];
+                dateObj = new Date(Math.round((dateStr - 25569) * 86400 * 1000));
             } else if (dateStr instanceof Date) {
-                 dateStr = dateStr.toISOString().split('T')[0];
+                 dateObj = dateStr;
             } else {
-                 dateStr = String(dateStr).split(' ')[0]; // ensure string
+                 dateObj = new Date(String(dateStr).split(' ')[0]);
             }
+            
+            if (isNaN(dateObj.getTime())) return;
+            
+            dateStr = dateObj.toISOString().split('T')[0];
             labels.push(dateStr);
             
+            let dailyPnl = row.Total_Net_PnL || 0;
+            let currentCumPnl;
+            
             if (row.Cum_Net_PnL_All !== undefined) {
-                pnlData.push(row.Cum_Net_PnL_All);
-            } else if (row.Total_Net_PnL !== undefined) {
-                cumPnl += row.Total_Net_PnL;
-                pnlData.push(cumPnl);
+                currentCumPnl = row.Cum_Net_PnL_All;
             } else {
-                pnlData.push(0);
+                cumPnl += dailyPnl;
+                currentCumPnl = cumPnl;
             }
+            pnlData.push(currentCumPnl);
+
+            // Calculate or extract drawdown
+            if (row.Drawdown_Net_All !== undefined) {
+                drawdownData.push(row.Drawdown_Net_All);
+            } else {
+                if (currentCumPnl > maxPnl) maxPnl = currentCumPnl;
+                const dd = currentCumPnl - maxPnl;
+                drawdownData.push(dd);
+            }
+
+            const year = dateObj.getFullYear();
+            const month = dateObj.getMonth() + 1; // 1-12
+            if (!heatmapRaw[year]) heatmapRaw[year] = {};
+            if (!heatmapRaw[year][month]) heatmapRaw[year][month] = 0;
+            heatmapRaw[year][month] += dailyPnl;
         }
     });
 
-    return { labels, pnlData };
+    return { labels, pnlData, drawdownData, heatmap: heatmapRaw };
 }
 
 app.get('/api/data/:timing', (req, res) => {

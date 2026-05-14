@@ -5,10 +5,7 @@ let dashboardDataCache = {};
 
 // Map UI timing strings to server API timings
 const apiTimingMap = {
-    '10:00 AM': '10:00',
-    '11:00 AM': '11:00',
-    '11:30 AM': '11:30',
-    '12:00 PM': '12:00'
+    '11:00 AM': '11:00'
 };
 
 // Update DateTime
@@ -26,7 +23,7 @@ function updateDateTime() {
         second: '2-digit'
     });
     const dtEl = document.getElementById('datetime');
-    if(dtEl) dtEl.textContent = `${dateStr} | ${timeStr}`;
+    if (dtEl) dtEl.textContent = `${dateStr} | ${timeStr}`;
 }
 
 setInterval(updateDateTime, 1000);
@@ -51,36 +48,7 @@ function generateParticles() {
 
 generateParticles();
 
-// Ticker Tape
-function createTickerTape() {
-    const symbols = [
-        { symbol: 'NIFTY', price: '19,435.50', change: '+1.23%', up: true },
-        { symbol: 'BANKNIFTY', price: '44,182.75', change: '+0.87%', up: true },
-        { symbol: 'INDIA VIX', price: '12.45', change: '-2.15%', up: false },
-        { symbol: 'NIFTY FUT', price: '19,455.80', change: '+1.05%', up: true },
-        { symbol: 'USDINR', price: '83.24', change: '-0.15%', up: false },
-        { symbol: 'GOLD', price: '61,245', change: '+0.45%', up: true },
-        { symbol: 'CRUDE', price: '6,785', change: '-1.25%', up: false },
-        { symbol: 'SENSEX', price: '65,280.45', change: '+0.95%', up: true }
-    ];
 
-    const ticker = document.getElementById('ticker');
-    if (!ticker) return;
-
-    const tickerItems = [...symbols, ...symbols].map(item => `
-        <div class="ticker-item">
-            <span class="ticker-symbol">${item.symbol}</span>
-            <span class="ticker-price">${item.price}</span>
-            <span class="ticker-change ${item.up ? 'up' : 'down'}">
-                ${item.up ? '▲' : '▼'} ${item.change}
-            </span>
-        </div>
-    `).join('');
-
-    ticker.innerHTML = tickerItems;
-}
-
-createTickerTape();
 
 // Format Number
 function formatNumber(num) {
@@ -100,11 +68,11 @@ function formatNumber(num) {
 async function fetchDashboardData(timing) {
     const apiTiming = apiTimingMap[timing];
     if (!apiTiming) return null;
-    
+
     if (dashboardDataCache[timing]) {
         return dashboardDataCache[timing];
     }
-    
+
     try {
         const response = await fetch(`/api/data/${apiTiming}`);
         if (!response.ok) throw new Error('Network response was not ok');
@@ -123,13 +91,13 @@ function updateKPICards(data) {
     if (!kpiGrid || !data || !data.metrics) return;
 
     const metrics = data.metrics;
-    
+
     // Fallback logic for derived metrics if not strictly present
     const total_net_profit = metrics.netProfit || 0;
     const max_drawdown = metrics.maxDrawdown || 0;
     const win_rate = metrics.winRate !== undefined ? metrics.winRate : (metrics.winDays / (metrics.winDays + metrics.lossDays) * 100) || 0;
     const avg_daily_pnl = total_net_profit / (metrics.winDays + metrics.lossDays || 1);
-    
+
     const kpis = [
         {
             label: 'Total Net Profit',
@@ -168,6 +136,20 @@ function updateKPICards(data) {
             change: 'Per Trading Day'
         },
         {
+            label: 'Total Net Points',
+            value: metrics.netPoints || 0,
+            icon: 'fa-bullseye',
+            format: 'decimal',
+            change: 'Points Captured'
+        },
+        {
+            label: 'Estimated Capital',
+            value: 1000000,
+            icon: 'fa-money-bill',
+            format: 'currency',
+            change: 'Initial Required'
+        },
+        {
             label: 'Transaction Cost',
             value: metrics.transactionCost || 0,
             icon: 'fa-exchange-alt',
@@ -187,8 +169,8 @@ function updateKPICards(data) {
             </div>
             <div class="kpi-value" data-value="${kpi.value}" data-format="${kpi.format}">
                 ${kpi.format === 'currency' ? formatNumber(kpi.value) :
-                  kpi.format === 'percent' ? kpi.value.toFixed(2) + '%' :
-                  kpi.value.toFixed(2)}
+            kpi.format === 'percent' ? kpi.value.toFixed(2) + '%' :
+                kpi.value.toFixed(2)}
             </div>
             <div class="kpi-change ${kpi.negative ? 'negative' : 'positive'}">
                 <i class="fas ${kpi.negative ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
@@ -198,26 +180,13 @@ function updateKPICards(data) {
     `).join('');
 }
 
-// Generate Data Points for Charts
-function generateEquityCurve(data) {
-    if (!data.chartData || !data.chartData.labels) return [];
-    const points = [];
-    for (let i = 0; i < data.chartData.labels.length; i++) {
-        points.push({
-            x: data.chartData.labels[i],
-            y: data.chartData.pnlData[i]
-        });
-    }
-    return points;
-}
-
 // Create Charts
 function createCharts(timing, data) {
     // Destroy existing charts
     Object.values(charts).forEach(chart => chart.destroy());
     charts = {};
 
-    if (!data) return;
+    if (!data || !data.chartData || !data.chartData.labels) return;
 
     // Equity Curve Chart
     const equityCtxEl = document.getElementById('equityChart');
@@ -226,9 +195,10 @@ function createCharts(timing, data) {
         charts.equity = new Chart(equityCtx, {
             type: 'line',
             data: {
+                labels: data.chartData.labels,
                 datasets: [{
                     label: timing + ' PnL',
-                    data: generateEquityCurve(data),
+                    data: data.chartData.pnlData,
                     borderColor: 'rgba(0, 240, 255, 1)',
                     backgroundColor: 'rgba(0, 240, 255, 0.1)',
                     borderWidth: 2,
@@ -260,10 +230,8 @@ function createCharts(timing, data) {
                 },
                 scales: {
                     x: {
-                        type: 'time',
-                        time: { unit: 'month' },
                         grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { color: '#94a3b8' }
+                        ticks: { color: '#94a3b8', maxTicksLimit: 12 }
                     },
                     y: {
                         grid: { color: 'rgba(255, 255, 255, 0.05)' },
@@ -281,36 +249,137 @@ function createCharts(timing, data) {
             }
         });
     }
-    
-    // Additional charts can be implemented as needed.
+
+    // Drawdown Chart
+    const drawdownCtxEl = document.getElementById('drawdownChart');
+    if (drawdownCtxEl && data.chartData.drawdownData) {
+        const drawdownCtx = drawdownCtxEl.getContext('2d');
+        charts.drawdown = new Chart(drawdownCtx, {
+            type: 'line',
+            data: {
+                labels: data.chartData.labels,
+                datasets: [{
+                    label: 'Drawdown',
+                    data: data.chartData.drawdownData,
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                    borderWidth: 1,
+                    fill: true,
+                    tension: 0.1,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: (context) => 'DD: ' + formatNumber(context.parsed.y)
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', maxTicksLimit: 12 }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#94a3b8', callback: (v) => formatNumber(v) }
+                    }
+                }
+            }
+        });
+    }
+
+    // Monthly Bar Chart
+    const monthlyCtxEl = document.getElementById('monthlyBarChart');
+    if (monthlyCtxEl && data.chartData.heatmap) {
+        const monthlyCtx = monthlyCtxEl.getContext('2d');
+        const heatmap = data.chartData.heatmap;
+        const years = Object.keys(heatmap).sort();
+        const yearLabels = years;
+        const yearProfits = years.map(year => {
+            return Object.values(heatmap[year]).reduce((a, b) => a + b, 0);
+        });
+
+        charts.monthly = new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: yearLabels,
+                datasets: [{
+                    label: 'Yearly PnL',
+                    data: yearProfits,
+                    backgroundColor: yearProfits.map(p => p >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)'),
+                    borderColor: yearProfits.map(p => p >= 0 ? '#10b981' : '#ef4444'),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => 'Total: ' + formatNumber(context.parsed.y)
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#94a3b8', callback: (v) => formatNumber(v) }
+                    },
+                    x: {
+                        ticks: { color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+    }
 }
 
-// Create Comparison Table
-function createComparisonTable(data) {
-    const tbody = document.getElementById('comparison-tbody');
-    if (!tbody || !data || !data.comparisonTable) return;
+// Create Heatmap
+function createHeatmap(data) {
+    const table = document.getElementById('heatmap-table');
+    if (!table || !data || !data.chartData || !data.chartData.heatmap) return;
     
-    tbody.innerHTML = data.comparisonTable.map(row => {
-        let singleStr = row.single;
-        let allStr = row.all !== null ? row.all : '-';
-        
-        // simple formatting heuristic
-        if (typeof singleStr === 'number') {
-            if (singleStr % 1 !== 0) singleStr = singleStr.toFixed(2);
+    const heatmapRaw = data.chartData.heatmap;
+    const years = Object.keys(heatmapRaw).sort((a,b)=>b-a);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    let thead = `<thead><tr><th>Year</th>${months.map(m=>`<th>${m}</th>`).join('')}<th>YTD</th></tr></thead>`;
+    let tbody = `<tbody>`;
+    
+    years.forEach(year => {
+        let rowHtml = `<tr><td style="font-weight:bold; color:var(--accent-cyan); padding: 0.5rem;">${year}</td>`;
+        let ytd = 0;
+        for(let i=1; i<=12; i++) {
+            let val = heatmapRaw[year][i];
+            if(val !== undefined) ytd += val;
+            
+            let color = 'transparent';
+            if(val !== undefined) {
+                const opacity = Math.min(Math.abs(val) / 50000, 0.8) + 0.1;
+                color = val >= 0 ? `rgba(16, 185, 129, ${opacity})` : `rgba(239, 68, 68, ${opacity})`;
+            }
+            let valStr = val !== undefined ? `₹${(val/1000).toFixed(1)}k` : '-';
+            rowHtml += `<td style="background-color: ${color}; padding: 0.5rem;">${valStr}</td>`;
         }
-        if (typeof allStr === 'number') {
-            if (allStr % 1 !== 0) allStr = allStr.toFixed(2);
-        }
-
-        return `
-            <tr>
-                <td class="metric-name">${row.metric}</td>
-                <td class="metric-value">${singleStr}</td>
-                <td class="metric-value">${allStr}</td>
-            </tr>
-        `;
-    }).join('');
+        const ytdColor = ytd >= 0 ? `rgba(16, 185, 129, 0.9)` : `rgba(239, 68, 68, 0.9)`;
+        rowHtml += `<td style="background-color: ${ytdColor}; font-weight:bold; padding: 0.5rem;">₹${(ytd/1000).toFixed(1)}k</td></tr>`;
+        tbody += rowHtml;
+    });
+    tbody += `</tbody>`;
+    table.innerHTML = thead + tbody;
 }
+
+
 
 // Main Render Function
 async function renderDashboard(timing) {
@@ -318,17 +387,14 @@ async function renderDashboard(timing) {
     if (!data) return;
     updateKPICards(data);
     createCharts(timing, data);
-    createComparisonTable(data);
+    createHeatmap(data);
 }
 
-// Tab Switching
+// Tab Switching (Simplified)
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
         const timing = btn.dataset.timing;
-        if (timing && timing !== 'comparison') {
+        if (timing) {
             currentTiming = timing;
             renderDashboard(timing);
         }
@@ -337,11 +403,11 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 // Remove loading overlay if exists
 const overlay = document.querySelector('.loading-overlay');
-if(overlay) {
+if (overlay) {
     setTimeout(() => {
         overlay.style.display = 'none';
     }, 1500);
 }
 
-// Start
+// Initial Load
 renderDashboard(currentTiming);
