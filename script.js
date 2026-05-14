@@ -64,25 +64,13 @@ function formatNumber(num) {
     }
 }
 
-// Fetch Data from API
+// Fetch Data (Static Version)
 async function fetchDashboardData(timing) {
-    const apiTiming = apiTimingMap[timing];
-    if (!apiTiming) return null;
-
-    if (dashboardDataCache[timing]) {
-        return dashboardDataCache[timing];
+    if (window.ATM_DATA && window.ATM_DATA[timing]) {
+        return window.ATM_DATA[timing];
     }
-
-    try {
-        const response = await fetch(`/api/data/${apiTiming}`);
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-        dashboardDataCache[timing] = data;
-        return data;
-    } catch (error) {
-        console.error('Error fetching data for', timing, error);
-        return null;
-    }
+    console.error('Data not found for timing:', timing);
+    return null;
 }
 
 // Update KPI Cards
