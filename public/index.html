@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Capital | Algorithmic Trading Analytics Platform</title>
+
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            /* Color Palette - Institutional Dark Luxury */
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #0f1420;
+            --bg-card: rgba(15, 20, 32, 0.6);
+            --bg-card-hover: rgba(20, 25, 40, 0.8);
+
+            /* Glassmorphism */
+            --glass-bg: rgba(15, 20, 32, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
+            /* Neon Accents */
+            --accent-cyan: #00f0ff;
+            --accent-blue: #0066ff;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-gold: #fbbf24;
+
+            /* Text Colors */
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+
+            /* Borders */
+            --border-subtle: rgba(255, 255, 255, 0.05);
+            --border-glow: rgba(0, 240, 255, 0.3);
+
+            /* Fonts */
+            --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Animated Background */
+        .background-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 0;
+            animation: gridPulse 20s ease-in-out infinite;
+        }
+
+        @keyframes gridPulse {
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 0.1;
+            }
+        }
+
+        /* Particle Background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            animation: float 20s infinite;
+            opacity: 0.1;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) translateX(0);
+            }
+
+            25% {
+                transform: translateY(-100px) translateX(100px);
+            }
+
+            50% {
+                transform: translateY(-50px) translateX(-100px);
+            }
+
+            75% {
+                transform: translateY(-150px) translateX(50px);
+            }
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1920px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        /* Top Navigation Bar */
+        .top-nav {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1920px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo i {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .nav-center {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .market-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .datetime {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .search-bar {
+            position: relative;
+        }
+
+        .search-bar input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            color: var(--text-primary);
+            font-family: var(--font-primary);
+            font-size: 0.875rem;
+            width: 300px;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.1);
+            width: 350px;
+        }
+
+        .search-bar i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .nav-icon {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-icon:hover {
+            background: rgba(0, 240, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .profile:hover {
+            background: rgba(0, 240, 255, 0.1);
+        }
+
+        .profile-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+        }
+
+        /* Portfolio Overview Section */
+        .portfolio-header {
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .portfolio-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .portfolio-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+
+        .kpi-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .kpi-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .kpi-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .kpi-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .kpi-card:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .kpi-card:nth-child(6) {
+            animation-delay: 0.6s;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-glow);
+            box-shadow: 0 8px 40px rgba(0, 240, 255, 0.15);
+        }
+
+        .kpi-card:hover::before {
+            opacity: 1;
+        }
+
+        .kpi-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .kpi-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .kpi-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 240, 255, 0.1);
+            border-radius: 8px;
+            font-size: 1.25rem;
+            color: var(--accent-cyan);
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .kpi-change {
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .kpi-change.positive {
+            color: var(--accent-green);
+        }
+
+        .kpi-change.negative {
+            color: var(--accent-red);
+        }
+
+        /* Strategy Tabs */
+        .strategy-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 0.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            animation: fadeInUp 0.8s ease-out 0.4s backwards;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-btn::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: var(--accent-cyan);
+            transition: width 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-cyan);
+            background: rgba(0, 240, 255, 0.1);
+        }
+
+        .tab-btn.active::before {
+            width: 80%;
+        }
+
+        /* Chart Sections */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 1s ease-out backwards;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+            border-color: var(--border-glow);
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-control-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chart-control-btn:hover,
+        .chart-control-btn.active {
+            background: rgba(0, 240, 255, 0.1);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+
+        /* Comparison Table */
+        .comparison-section {
+            animation: fadeInUp 1.2s ease-out backwards;
+        }
+
+        .comparison-table-wrapper {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .comparison-table thead {
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        .comparison-table th {
+            padding: 1.5rem;
+            text-align: left;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--border-glow);
+        }
+
+        .comparison-table tbody tr {
+            transition: all 0.3s ease;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .comparison-table tbody tr:hover {
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        .comparison-table td {
+            padding: 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+        }
+
+        .metric-name {
+            color: var(--text-secondary);
+            font-family: var(--font-primary);
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-weight: 600;
+        }
+
+        .metric-value.best {
+            color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: 4rem;
+        }
+
+        /* Loading Animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeOut 1s ease-out 1.5s forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                pointer-events: none;
+            }
+        }
+
+        .loader {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(0, 240, 255, 0.1);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .search-bar input {
+                width: 100%;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .strategy-tabs {
+                flex-direction: column;
+            }
+        }
+
+        /* Ticker Tape */
+        .ticker-tape {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.75rem 0;
+            overflow: hidden;
+            border-top: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 2rem;
+        }
+
+        .ticker-content {
+            display: flex;
+            gap: 3rem;
+            animation: tickerScroll 30s linear infinite;
+        }
+
+        @keyframes tickerScroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            white-space: nowrap;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+        }
+
+        .ticker-symbol {
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .ticker-price {
+            color: var(--text-primary);
+        }
+
+        .ticker-change {
+            font-size: 0.75rem;
+        }
+
+        .ticker-change.up {
+            color: var(--accent-green);
+        }
+
+        .ticker-change.down {
+            color: var(--accent-red);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Animated Background -->
+    <div class="background-grid"></div>
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <div class="nav-content">
+                <div class="logo">
+                    <i class="fas fa-chart-network"></i>
+                    <span>QUANTUM CAPITAL</span>
+                </div>
+
+                <div class="nav-center">
+                    <div class="market-status">
+                        <span class="status-dot"></span>
+                        <span>Market Open</span>
+                    </div>
+                    <div class="datetime" id="datetime"></div>
+                </div>
+
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search strategies, metrics...">
+                </div>
+
+                <div class="nav-right">
+                    <div class="nav-icon">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </div>
+                    <div class="profile">
+                        <div class="profile-avatar">RK</div>
+                        <span style="font-weight: 600;">Rakshit</span>
+                        <i class="fas fa-chevron-down" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Ticker Tape -->
+        <div class="ticker-tape">
+            <div class="ticker-content" id="ticker"></div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Portfolio Header -->
+            <div class="portfolio-header">
+                <h1>ATM Straddle Strategy Analytics</h1>
+                <p class="portfolio-subtitle">NIFTY Options | Next Week Expiry | Multi-Cycle Hedging System</p>
+            </div>
+
+            <!-- Strategy Tabs -->
+            <div class="strategy-tabs">
+                <button class="tab-btn active" data-timing="11:00 AM">
+                    <i class="fas fa-clock"></i> 11:00 AM Entry
+                </button>
+                <button class="tab-btn" data-timing="11:30 AM">
+                    <i class="fas fa-clock"></i> 11:30 AM Entry
+                </button>
+                <button class="tab-btn" data-timing="12:00 PM">
+                    <i class="fas fa-clock"></i> 12:00 PM Entry
+                </button>
+                <button class="tab-btn" data-timing="comparison">
+                    <i class="fas fa-chart-bar"></i> Comparison View
+                </button>
+            </div>
+
+            <!-- KPI Grid -->
+            <div class="kpi-grid" id="kpi-grid"></div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Equity Curve</h3>
+                        <div class="chart-controls">
+                            <button class="chart-control-btn active">ALL</button>
+                            <button class="chart-control-btn">1Y</button>
+                            <button class="chart-control-btn">6M</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="equityChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Drawdown Analysis</h3>
+                        <div class="chart-controls">
+                            <button class="chart-control-btn active">ALL</button>
+                            <button class="chart-control-btn">1Y</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="drawdownChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Strategy Performance Comparison</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Risk-Return Profile</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="riskReturnChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="comparison-section">
+                <div class="portfolio-header" style="margin-top: 3rem;">
+                    <h1>Detailed Strategy Comparison</h1>
+                    <p class="portfolio-subtitle">Comprehensive metrics across all entry timing variants</p>
+                </div>
+
+                <div class="comparison-table-wrapper">
+                    <table class="comparison-table" id="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>11:00 AM</th>
+                                <th>11:30 AM</th>
+                                <th>12:00 PM</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparison-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 Quantum Capital Analytics. Institutional-Grade Algorithmic Trading Platform.</p>
+            <p style="margin-top: 0.5rem; font-size: 0.75rem;">Powered by Advanced Quantitative Models | Real-time Risk
+                Analytics</p>
+        </footer>
+    </div>
+
+    <script>
+        // Dashboard Data
+        const dashboardData = {
+            "11:00 AM": {
+                "metrics": {
+                    "total_net_profit": 1102353.73,
+                    "max_drawdown": -38186.48,
+                    "max_drawdown_pct": -2.0,
+                    "total_trading_days": 1729,
+                    "win_days": 1089,
+                    "loss_days": 640,
+                    "win_rate": 62.98,
+                    "avg_daily_pnl": 637.57,
+                    "best_day": 19328.99,
+                    "worst_day": -26827.48,
+                    "total_gross_profit": 1490836.75,
+                    "total_transaction_cost": 388483.02,
+                    "cagr": 11.44,
+                    "sharpe_ratio": 2.29,
+                    "recovery_factor": 28.87
+                }
+            },
+            "11:30 AM": {
+                "metrics": {
+                    "total_net_profit": 936028.88,
+                    "max_drawdown": -38233.21,
+                    "max_drawdown_pct": -2.16,
+                    "total_trading_days": 1731,
+                    "win_days": 1092,
+                    "loss_days": 639,
+                    "win_rate": 63.08,
+                    "avg_daily_pnl": 540.74,
+                    "best_day": 20748.63,
+                    "worst_day": -24597.62,
+                    "total_gross_profit": 1320270.25,
+                    "total_transaction_cost": 384241.37,
+                    "cagr": 10.10,
+                    "sharpe_ratio": 1.76,
+                    "recovery_factor": 24.48
+                }
+            },
+            "12:00 PM": {
+                "metrics": {
+                    "total_net_profit": 770469.4,
+                    "max_drawdown": -40332.22,
+                    "max_drawdown_pct": -2.40,
+                    "total_trading_days": 1732,
+                    "win_days": 1078,
+                    "loss_days": 654,
+                    "win_rate": 62.24,
+                    "avg_daily_pnl": 444.84,
+                    "best_day": 11182.25,
+                    "worst_day": -22739.67,
+                    "total_gross_profit": 1148413.5,
+                    "total_transaction_cost": 377944.1,
+                    "cagr": 8.67,
+                    "sharpe_ratio": 1.31,
+                    "recovery_factor": 19.1
+                }
+            }
+        };
+
+        // Initialize
+        let currentTiming = '11:00 AM';
+        let charts = {};
+
+        // Update DateTime
+        function updateDateTime() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            const timeStr = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('datetime').textContent = `${dateStr} | ${timeStr}`;
+        }
+
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // Generate Particles
+        function generateParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.width = Math.random() * 4 + 2 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        generateParticles();
+
+        // Ticker Tape
+        function createTickerTape() {
+            const symbols = [
+                { symbol: 'NIFTY', price: '19,435.50', change: '+1.23%', up: true },
+                { symbol: 'BANKNIFTY', price: '44,182.75', change: '+0.87%', up: true },
+                { symbol: 'INDIA VIX', price: '12.45', change: '-2.15%', up: false },
+                { symbol: 'NIFTY FUT', price: '19,455.80', change: '+1.05%', up: true },
+                { symbol: 'USDINR', price: '83.24', change: '-0.15%', up: false },
+                { symbol: 'GOLD', price: '61,245', change: '+0.45%', up: true },
+                { symbol: 'CRUDE', price: '6,785', change: '-1.25%', up: false },
+                { symbol: 'SENSEX', price: '65,280.45', change: '+0.95%', up: true }
+            ];
+
+            const ticker = document.getElementById('ticker');
+
+            // Duplicate for infinite scroll
+            const tickerItems = [...symbols, ...symbols].map(item => `
+                <div class="ticker-item">
+                    <span class="ticker-symbol">${item.symbol}</span>
+                    <span class="ticker-price">${item.price}</span>
+                    <span class="ticker-change ${item.up ? 'up' : 'down'}">
+                        ${item.up ? '▲' : '▼'} ${item.change}
+                    </span>
+                </div>
+            `).join('');
+
+            ticker.innerHTML = tickerItems;
+        }
+
+        createTickerTape();
+
+        // Animated Counter
+        function animateCounter(element, start, end, duration) {
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    current = end;
+                    clearInterval(timer);
+                }
+                element.textContent = formatNumber(current);
+            }, 16);
+        }
+
+        // Format Number
+        function formatNumber(num) {
+            if (Math.abs(num) >= 10000000) {
+                return '₹' + (num / 10000000).toFixed(2) + 'Cr';
+            } else if (Math.abs(num) >= 100000) {
+                return '₹' + (num / 100000).toFixed(2) + 'L';
+            } else if (Math.abs(num) >= 1000) {
+                return '₹' + (num / 1000).toFixed(1) + 'K';
+            } else {
+                return '₹' + num.toFixed(2);
+            }
+        }
+
+        // Update KPI Cards
+        function updateKPICards(timing) {
+            const data = dashboardData[timing].metrics;
+            const kpiGrid = document.getElementById('kpi-grid');
+
+            const kpis = [
+                {
+                    label: 'Total Net Profit',
+                    value: data.total_net_profit,
+                    icon: 'fa-wallet',
+                    format: 'currency',
+                    change: '+' + data.cagr.toFixed(2) + '% CAGR'
+                },
+                {
+                    label: 'Sharpe Ratio',
+                    value: data.sharpe_ratio,
+                    icon: 'fa-chart-line',
+                    format: 'decimal',
+                    change: 'Risk-Adjusted'
+                },
+                {
+                    label: 'Max Drawdown',
+                    value: data.max_drawdown,
+                    icon: 'fa-arrow-down',
+                    format: 'currency',
+                    change: data.max_drawdown_pct.toFixed(2) + '%',
+                    negative: true
+                },
+                {
+                    label: 'Win Rate',
+                    value: data.win_rate,
+                    icon: 'fa-percentage',
+                    format: 'percent',
+                    change: data.win_days + ' / ' + data.total_trading_days + ' Days'
+                },
+                {
+                    label: 'Avg Daily PnL',
+                    value: data.avg_daily_pnl,
+                    icon: 'fa-calendar-day',
+                    format: 'currency',
+                    change: 'Per Trading Day'
+                },
+                {
+                    label: 'Recovery Factor',
+                    value: data.recovery_factor,
+                    icon: 'fa-redo',
+                    format: 'decimal',
+                    change: 'Net PnL / Max DD'
+                }
+            ];
+
+            kpiGrid.innerHTML = kpis.map(kpi => `
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-label">${kpi.label}</span>
+                        <div class="kpi-icon">
+                            <i class="fas ${kpi.icon}"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value" data-value="${kpi.value}" data-format="${kpi.format}">
+                        ${kpi.format === 'currency' ? formatNumber(kpi.value) :
+                    kpi.format === 'percent' ? kpi.value.toFixed(2) + '%' :
+                        kpi.value.toFixed(2)}
+                    </div>
+                    <div class="kpi-change ${kpi.negative ? 'negative' : 'positive'}">
+                        <i class="fas ${kpi.negative ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+                        <span>${kpi.change}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Generate Sample Equity Curve Data
+        function generateEquityCurve(timing) {
+            const data = dashboardData[timing].metrics;
+            const days = data.total_trading_days;
+            const finalPnL = data.total_net_profit;
+
+            const points = [];
+            let cumPnL = 0;
+
+            for (let i = 0; i < Math.min(days, 200); i++) {
+                const progress = i / Math.min(days, 200);
+                const noise = (Math.random() - 0.5) * 5000;
+                cumPnL = finalPnL * progress + noise;
+                points.push({
+                    x: new Date(2019, 0, 1 + i * 4).toISOString().split('T')[0],
+                    y: cumPnL
+                });
+            }
+
+            return points;
+        }
+
+        // Generate Sample Drawdown Data
+        function generateDrawdownCurve(timing) {
+            const data = dashboardData[timing].metrics;
+            const days = data.total_trading_days;
+            const maxDD = data.max_drawdown;
+
+            const points = [];
+            let dd = 0;
+
+            for (let i = 0; i < Math.min(days, 200); i++) {
+                const progress = i / Math.min(days, 200);
+                if (Math.random() > 0.7) {
+                    dd = maxDD * (0.3 + Math.random() * 0.7);
+                } else {
+                    dd = Math.max(dd * 0.9, 0);
+                }
+                points.push({
+                    x: new Date(2019, 0, 1 + i * 4).toISOString().split('T')[0],
+                    y: dd
+                });
+            }
+
+            return points;
+        }
+
+        // Create Charts
+        function createCharts(timing) {
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+
+            // Equity Curve Chart
+            const equityCtx = document.getElementById('equityChart').getContext('2d');
+            charts.equity = new Chart(equityCtx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: timing + ' Entry',
+                        data: generateEquityCurve(timing),
+                        borderColor: 'rgba(0, 240, 255, 1)',
+                        backgroundColor: 'rgba(0, 240, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(15, 20, 32, 0.9)',
+                            titleColor: '#00f0ff',
+                            bodyColor: '#e2e8f0',
+                            borderColor: 'rgba(0, 240, 255, 0.3)',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: (context) => 'PnL: ' + formatNumber(context.parsed.y)
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: { unit: 'month' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: (value) => formatNumber(value)
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+
+            // Drawdown Chart
+            const ddCtx = document.getElementById('drawdownChart').getContext('2d');
+            charts.drawdown = new Chart(ddCtx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Drawdown',
+                        data: generateDrawdownCurve(timing),
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(15, 20, 32, 0.9)',
+                            titleColor: '#ef4444',
+                            bodyColor: '#e2e8f0',
+                            borderColor: 'rgba(239, 68, 68, 0.3)',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: (context) => 'DD: ' + formatNumber(context.parsed.y)
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: { unit: 'month' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: (value) => formatNumber(value)
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Comparison Bar Chart
+            const compCtx = document.getElementById('comparisonChart').getContext('2d');
+            charts.comparison = new Chart(compCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['11:00 AM', '11:30 AM', '12:00 PM'],
+                    datasets: [{
+                        label: 'Net Profit (₹L)',
+                        data: [11.02, 9.36, 7.70],
+                        backgroundColor: [
+                            'rgba(0, 240, 255, 0.7)',
+                            'rgba(139, 92, 246, 0.7)',
+                            'rgba(236, 72, 153, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(0, 240, 255, 1)',
+                            'rgba(139, 92, 246, 1)',
+                            'rgba(236, 72, 153, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 20, 32, 0.9)',
+                            titleColor: '#00f0ff',
+                            bodyColor: '#e2e8f0',
+                            borderColor: 'rgba(0, 240, 255, 0.3)',
+                            borderWidth: 1,
+                            padding: 12
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { size: 12, weight: 600 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: (value) => '₹' + value + 'L'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Risk-Return Scatter
+            const rrCtx = document.getElementById('riskReturnChart').getContext('2d');
+            charts.riskReturn = new Chart(rrCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: '11:00 AM',
+                            data: [{ x: 2.0, y: 11.44 }],
+                            backgroundColor: 'rgba(0, 240, 255, 0.7)',
+                            borderColor: 'rgba(0, 240, 255, 1)',
+                            pointRadius: 12,
+                            pointHoverRadius: 15
+                        },
+                        {
+                            label: '11:30 AM',
+                            data: [{ x: 2.16, y: 10.10 }],
+                            backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                            borderColor: 'rgba(139, 92, 246, 1)',
+                            pointRadius: 12,
+                            pointHoverRadius: 15
+                        },
+                        {
+                            label: '12:00 PM',
+                            data: [{ x: 2.40, y: 8.67 }],
+                            backgroundColor: 'rgba(236, 72, 153, 0.7)',
+                            borderColor: 'rgba(236, 72, 153, 1)',
+                            pointRadius: 12,
+                            pointHoverRadius: 15
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#94a3b8',
+                                font: { size: 12, weight: 600 },
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 20, 32, 0.9)',
+                            titleColor: '#00f0ff',
+                            bodyColor: '#e2e8f0',
+                            borderColor: 'rgba(0, 240, 255, 0.3)',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: (context) => [
+                                    'Max DD: ' + context.parsed.x + '%',
+                                    'CAGR: ' + context.parsed.y.toFixed(2) + '%'
+                                ]
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Max Drawdown (%)', color: '#94a3b8' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8' },
+                            reverse: true
+                        },
+                        y: {
+                            title: { display: true, text: 'CAGR (%)', color: '#94a3b8' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create Comparison Table
+        function createComparisonTable() {
+            const tbody = document.getElementById('comparison-tbody');
+
+            const metrics = [
+                { name: 'Total Net Profit', key: 'total_net_profit', format: 'currency', higherBetter: true },
+                { name: 'CAGR (%)', key: 'cagr', format: 'percent', higherBetter: true },
+                { name: 'Sharpe Ratio', key: 'sharpe_ratio', format: 'decimal', higherBetter: true },
+                { name: 'Max Drawdown', key: 'max_drawdown', format: 'currency', higherBetter: false },
+                { name: 'Max Drawdown (%)', key: 'max_drawdown_pct', format: 'percent', higherBetter: false },
+                { name: 'Recovery Factor', key: 'recovery_factor', format: 'decimal', higherBetter: true },
+                { name: 'Win Rate (%)', key: 'win_rate', format: 'percent', higherBetter: true },
+                { name: 'Avg Daily PnL', key: 'avg_daily_pnl', format: 'currency', higherBetter: true },
+                { name: 'Best Day', key: 'best_day', format: 'currency', higherBetter: true },
+                { name: 'Worst Day', key: 'worst_day', format: 'currency', higherBetter: false },
+                { name: 'Total Trading Days', key: 'total_trading_days', format: 'number', higherBetter: false },
+                { name: 'Win Days', key: 'win_days', format: 'number', higherBetter: true },
+                { name: 'Loss Days', key: 'loss_days', format: 'number', higherBetter: false }
+            ];
+
+            const timings = ['11:00 AM', '11:30 AM', '12:00 PM'];
+
+            tbody.innerHTML = metrics.map(metric => {
+                const values = timings.map(t => dashboardData[t].metrics[metric.key]);
+                const bestValue = metric.higherBetter ? Math.max(...values) : Math.min(...values);
+
+                return `
+                    <tr>
+                        <td class="metric-name">${metric.name}</td>
+                        ${timings.map(t => {
+                    const value = dashboardData[t].metrics[metric.key];
+                    const isBest = value === bestValue;
+                    const formatted = metric.format === 'currency' ? formatNumber(value) :
+                        metric.format === 'percent' ? value.toFixed(2) + '%' :
+                            metric.format === 'decimal' ? value.toFixed(2) :
+                                value.toLocaleString();
+                    return `<td class="metric-value ${isBest ? 'best' : ''}">${formatted}</td>`;
+                }).join('')}
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Tab Switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const timing = btn.dataset.timing;
+                if (timing !== 'comparison') {
+                    currentTiming = timing;
+                    updateKPICards(timing);
+                    createCharts(timing);
+                }
+            });
+        });
+
+        // Initialize Dashboard
+        updateKPICards(currentTiming);
+        createCharts(currentTiming);
+        createComparisonTable();
+    </script>
+</body>
+
+</html>
