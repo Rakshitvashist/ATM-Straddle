@@ -41,8 +41,8 @@ function getMetricsData(timing) {
             if (metricName === 'Total Gross Profit') target.grossProfit = value;
             if (metricName === 'Max Drawdown (Rupees)') target.maxDrawdownRupees = value;
             if (metricName === 'Max Drawdown (Points)') target.maxDrawdownPoints = value;
-            if (metricName.includes('Winning Days')) target.winDays = value;
-            if (metricName.includes('Losing Days')) target.lossDays = value;
+            if (metricName === 'Win Days') target.winDays = value;
+            if (metricName === 'Loss Days') target.lossDays = value;
             if (metricName.includes('Total Transaction Cost')) target.transactionCost = value;
             if (metricName === 'Win Rate %') target.winRate = value;
             if (metricName === 'Total Net Points Captured') target.netPoints = value;
@@ -51,20 +51,6 @@ function getMetricsData(timing) {
         processMetric(metrics.c1, mapping.c1Col);
         processMetric(metrics.all, mapping.allCol);
     });
-
-    // Ensure we have a default maxDrawdown for backward compatibility in the UI if needed
-    metrics.c1.maxDrawdown = metrics.c1.maxDrawdownRupees || metrics.c1.maxDrawdownPoints;
-    metrics.all.maxDrawdown = metrics.all.maxDrawdownRupees || metrics.all.maxDrawdownPoints;
-
-    // Also get points from the specific points file if it exists
-    if (mapping.pointsFile && fs.existsSync(mapping.pointsFile)) {
-        const pointsWb = xlsx.readFile(mapping.pointsFile);
-        const pointsData = xlsx.utils.sheet_to_json(pointsWb.Sheets[pointsWb.SheetNames[0]]);
-        if (pointsData.length > 0) {
-            const lastRow = pointsData[pointsData.length - 1];
-            metrics.all.netPoints = lastRow.Cum_Net_Points_All || 0;
-        }
-    }
 
     return metrics;
 }
@@ -77,54 +63,71 @@ function getChartData(timing) {
     if (!fs.existsSync(filePath)) return null;
 
     const workbook = xlsx.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const rawData = xlsx.utils.sheet_to_json(sheet);
+    
+    // Process Detailed Trade Log for per-cycle data
+    const tradeSheet = workbook.Sheets['Detailed Trade Log'];
+    if (!tradeSheet) return null;
+    const tradeData = xlsx.utils.sheet_to_json(tradeSheet);
 
-    const labels = [];
-    const pnlData = [];
-    const drawdownData = [];
-    const heatmapRaw = {};
+    const dailyPnL = {}; // { date: { c1: val, c2: val, all: val } }
 
-    let cumPnl = 0;
-    let maxPnl = -Infinity;
-
-    rawData.forEach(row => {
-        if (row.Date) {
-            let dateObj;
-            if (typeof row.Date === 'number') {
-                dateObj = new Date(Math.round((row.Date - 25569) * 86400 * 1000));
-            } else if (row.Date instanceof Date) {
-                 dateObj = row.Date;
-            } else {
-                 dateObj = new Date(String(row.Date).split(' ')[0]);
-            }
-            if (isNaN(dateObj.getTime())) return;
-            
-            const dateStr = dateObj.toISOString().split('T')[0];
-            labels.push(dateStr);
-            
-            let dailyPnl = row.Total_Net_PnL || 0;
-            let currentCumPnl = row.Cum_Net_PnL_All !== undefined ? row.Cum_Net_PnL_All : (cumPnl += dailyPnl);
-            
-            pnlData.push(currentCumPnl);
-
-            if (row.Drawdown_Net_All !== undefined) {
-                drawdownData.push(row.Drawdown_Net_All);
-            } else {
-                if (currentCumPnl > maxPnl) maxPnl = currentCumPnl;
-                drawdownData.push(currentCumPnl - maxPnl);
-            }
-
-            const year = dateObj.getFullYear();
-            const month = dateObj.getMonth() + 1;
-            if (!heatmapRaw[year]) heatmapRaw[year] = {};
-            if (!heatmapRaw[year][month]) heatmapRaw[year][month] = 0;
-            heatmapRaw[year][month] += dailyPnl;
+    tradeData.forEach(row => {
+        if (!row.Date) return;
+        let dateObj;
+        if (typeof row.Date === 'number') {
+            dateObj = new Date(Math.round((row.Date - 25569) * 86400 * 1000));
+        } else if (row.Date instanceof Date) {
+            dateObj = row.Date;
+        } else {
+            dateObj = new Date(String(row.Date).split(' ')[0]);
         }
+        if (isNaN(dateObj.getTime())) return;
+        const dateStr = dateObj.toISOString().split('T')[0];
+
+        if (!dailyPnL[dateStr]) {
+            dailyPnL[dateStr] = { c1: 0, c2: 0, all: 0 };
+        }
+
+        const netPnl = row.Net_PnL || 0;
+        dailyPnL[dateStr].all += netPnl;
+        if (row.Cycle === 1) dailyPnL[dateStr].c1 += netPnl;
+        if (row.Cycle === 2) dailyPnL[dateStr].c2 += netPnl;
     });
 
-    return { labels, pnlData, drawdownData, heatmap: heatmapRaw };
+    const dates = Object.keys(dailyPnL).sort();
+    
+    const processSeries = (type) => {
+        const pnlData = [];
+        const drawdownData = [];
+        const heatmap = {};
+        let cumPnl = 0;
+        let maxPnl = -Infinity;
+
+        dates.forEach(dateStr => {
+            const daily = dailyPnL[dateStr][type];
+            cumPnl += daily;
+            pnlData.push(cumPnl);
+
+            if (cumPnl > maxPnl) maxPnl = cumPnl;
+            drawdownData.push(cumPnl - maxPnl);
+
+            const dateObj = new Date(dateStr);
+            const year = dateObj.getFullYear();
+            const month = dateObj.getMonth() + 1;
+            if (!heatmap[year]) heatmap[year] = {};
+            if (!heatmap[year][month]) heatmap[year][month] = 0;
+            heatmap[year][month] += daily;
+        });
+
+        return { pnlData, drawdownData, heatmap };
+    };
+
+    return {
+        labels: dates,
+        c1: processSeries('c1'),
+        c2: processSeries('c2'),
+        all: processSeries('all')
+    };
 }
 
 // Generate Data
