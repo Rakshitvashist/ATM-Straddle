@@ -4,9 +4,11 @@ window.ATM_DATA = {
       "grossProfit": 1478990.5,
       "transactionCost": 379333.11,
       "netProfit": 1099657.39,
-      "maxDrawdown": -456.87,
+      "maxDrawdownRupees": -29696.28,
       "winRate": 62.87,
-      "netPoints": 16959.29
+      "netPoints": 16959.29,
+      "maxDrawdownPoints": -456.87,
+      "maxDrawdown": -29696.28
     },
     "chartData": {
       "labels": [

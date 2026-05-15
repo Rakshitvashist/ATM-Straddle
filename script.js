@@ -92,7 +92,7 @@ function updateKPICards(data) {
             value: total_net_profit,
             icon: 'fa-wallet',
             format: 'currency',
-            change: 'Overall PnL'
+            change: (metrics.netPoints ? metrics.netPoints.toFixed(2) + ' Points' : 'Overall PnL')
         },
         {
             label: 'Total Gross Profit',
@@ -103,10 +103,10 @@ function updateKPICards(data) {
         },
         {
             label: 'Max Drawdown',
-            value: max_drawdown,
+            value: metrics.maxDrawdownRupees || max_drawdown,
             icon: 'fa-arrow-down',
             format: 'currency',
-            change: 'Max Peak to Trough',
+            change: (metrics.maxDrawdownPoints ? metrics.maxDrawdownPoints.toFixed(2) + ' Points' : 'Max Peak to Trough'),
             negative: true
         },
         {
