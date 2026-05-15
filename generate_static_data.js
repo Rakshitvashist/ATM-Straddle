@@ -32,14 +32,19 @@ function getMetricsData(timing) {
         const metricName = row[metricCol] ? String(row[metricCol]).trim() : '';
         const value = row[valCol];
 
-        if (metricName.includes('Total Net Profit')) metrics.netProfit = value;
-        if (metricName.includes('Total Gross Profit')) metrics.grossProfit = value;
-        if (metricName.includes('Max Drawdown')) metrics.maxDrawdown = value;
+        if (metricName === 'Total Net Profit') metrics.netProfit = value;
+        if (metricName === 'Total Gross Profit') metrics.grossProfit = value;
+        if (metricName === 'Max Drawdown (Rupees)') metrics.maxDrawdownRupees = value;
+        if (metricName === 'Max Drawdown (Points)') metrics.maxDrawdownPoints = value;
         if (metricName.includes('Winning Days')) metrics.winDays = value;
         if (metricName.includes('Losing Days')) metrics.lossDays = value;
         if (metricName.includes('Total Transaction Cost')) metrics.transactionCost = value;
-        if (metricName.includes('Win Rate')) metrics.winRate = value;
+        if (metricName === 'Win Rate %') metrics.winRate = value;
+        if (metricName === 'Total Net Points Captured') metrics.netPoints = value;
     });
+
+    // Ensure we have a default maxDrawdown for backward compatibility in the UI if needed
+    metrics.maxDrawdown = metrics.maxDrawdownRupees || metrics.maxDrawdownPoints;
 
     // Also get points from the specific points file if it exists
     if (mapping.pointsFile && fs.existsSync(mapping.pointsFile)) {
