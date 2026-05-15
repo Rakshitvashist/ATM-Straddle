@@ -1,5 +1,6 @@
 // Initialize
 let currentTiming = '11:00 AM';
+let currentCycle = 'all'; // 'all', 'c1', 'c2'
 let charts = {};
 let dashboardDataCache = {};
 
@@ -48,8 +49,6 @@ function generateParticles() {
 
 generateParticles();
 
-
-
 // Format Number
 function formatNumber(num) {
     if (num === null || num === undefined || isNaN(num)) return '-';
@@ -78,67 +77,39 @@ function updateKPICards(data) {
     const kpiGrid = document.getElementById('kpi-grid');
     if (!kpiGrid || !data || !data.metrics) return;
 
-    const all = data.metrics.all || {};
-    const c1 = data.metrics.c1 || {};
-
+    const metrics = data.metrics[currentCycle] || {};
+    
     // Helper to calculate win rate
     const getWinRate = (m) => m.winRate !== undefined ? m.winRate : (m.winDays / (m.winDays + m.lossDays) * 100) || 0;
     
+    const cycleLabel = currentCycle.toUpperCase();
+    
     const kpis = [
         {
-            label: 'Total Net Profit (All)',
-            value: all.netProfit || 0,
+            label: `Total Net Profit (${cycleLabel})`,
+            value: metrics.netProfit || 0,
             icon: 'fa-wallet',
             format: 'currency',
-            change: (all.netPoints ? all.netPoints.toFixed(2) + ' Points' : 'All Cycles PnL')
+            change: (metrics.netPoints ? metrics.netPoints.toFixed(2) + ' Points' : 'Strategy PnL')
         },
         {
-            label: 'Total Net Profit (C1)',
-            value: c1.netProfit || 0,
-            icon: 'fa-wallet',
-            format: 'currency',
-            change: (c1.netPoints ? c1.netPoints.toFixed(2) + ' Points' : 'Single Cycle PnL')
-        },
-        {
-            label: 'Max Drawdown (All)',
-            value: all.maxDrawdownRupees || all.maxDrawdown || 0,
+            label: `Max Drawdown (${cycleLabel})`,
+            value: metrics.maxDrawdownRupees || 0,
             icon: 'fa-arrow-down',
             format: 'currency',
-            change: (all.maxDrawdownPoints ? all.maxDrawdownPoints.toFixed(2) + ' Points' : 'Max DD All'),
+            change: (metrics.maxDrawdownPoints ? metrics.maxDrawdownPoints.toFixed(2) + ' Points' : 'Max Peak to Trough'),
             negative: true
         },
         {
-            label: 'Max Drawdown (C1)',
-            value: c1.maxDrawdownRupees || c1.maxDrawdown || 0,
-            icon: 'fa-arrow-down',
-            format: 'currency',
-            change: (c1.maxDrawdownPoints ? c1.maxDrawdownPoints.toFixed(2) + ' Points' : 'Max DD Single'),
-            negative: true
-        },
-        {
-            label: 'Win Rate (All)',
-            value: getWinRate(all),
+            label: `Win Rate (${cycleLabel})`,
+            value: getWinRate(metrics),
             icon: 'fa-percentage',
             format: 'percent',
-            change: (all.winDays || 0) + ' Win Days'
+            change: 'Winning Percentage'
         },
         {
-            label: 'Win Rate (C1)',
-            value: getWinRate(c1),
-            icon: 'fa-percentage',
-            format: 'percent',
-            change: (c1.winDays || 0) + ' Win Days'
-        },
-        {
-            label: 'Avg Daily PnL (All)',
-            value: (all.netProfit || 0) / (all.winDays + all.lossDays || 1),
-            icon: 'fa-calendar-day',
-            format: 'currency',
-            change: 'Overall Avg'
-        },
-        {
-            label: 'Total Net Points (All)',
-            value: all.netPoints || 0,
+            label: `Total Net Points (${cycleLabel})`,
+            value: metrics.netPoints || 0,
             icon: 'fa-bullseye',
             format: 'decimal',
             change: 'Captured Points'
@@ -164,15 +135,17 @@ function updateKPICards(data) {
             </div>
         </div>
     `).join('');
-}
-
 // Create Charts
 function createCharts(timing, data) {
     // Destroy existing charts
     Object.values(charts).forEach(chart => chart.destroy());
     charts = {};
 
-    if (!data || !data.chartData || !data.chartData.labels) return;
+    if (!data || !data.chartData) return;
+    
+    // Get data for selected cycle
+    const cycleData = data.chartData[currentCycle];
+    if (!cycleData || !data.chartData.labels) return;
 
     // Equity Curve Chart
     const equityCtxEl = document.getElementById('equityChart');
@@ -183,8 +156,8 @@ function createCharts(timing, data) {
             data: {
                 labels: data.chartData.labels,
                 datasets: [{
-                    label: timing + ' PnL',
-                    data: data.chartData.pnlData,
+                    label: `${timing} (${currentCycle.toUpperCase()}) PnL`,
+                    data: cycleData.pnlData,
                     borderColor: 'rgba(0, 240, 255, 1)',
                     backgroundColor: 'rgba(0, 240, 255, 0.1)',
                     borderWidth: 2,
@@ -238,7 +211,7 @@ function createCharts(timing, data) {
 
     // Drawdown Chart
     const drawdownCtxEl = document.getElementById('drawdownChart');
-    if (drawdownCtxEl && data.chartData.drawdownData) {
+    if (drawdownCtxEl && cycleData.drawdownData) {
         const drawdownCtx = drawdownCtxEl.getContext('2d');
         charts.drawdown = new Chart(drawdownCtx, {
             type: 'line',
@@ -246,7 +219,7 @@ function createCharts(timing, data) {
                 labels: data.chartData.labels,
                 datasets: [{
                     label: 'Drawdown',
-                    data: data.chartData.drawdownData,
+                    data: cycleData.drawdownData,
                     borderColor: 'rgba(239, 68, 68, 1)',
                     backgroundColor: 'rgba(239, 68, 68, 0.2)',
                     borderWidth: 1,
@@ -282,11 +255,11 @@ function createCharts(timing, data) {
         });
     }
 
-    // Monthly Bar Chart
+    // Yearly Bar Chart
     const monthlyCtxEl = document.getElementById('monthlyBarChart');
-    if (monthlyCtxEl && data.chartData.heatmap) {
+    if (monthlyCtxEl && cycleData.heatmap) {
         const monthlyCtx = monthlyCtxEl.getContext('2d');
-        const heatmap = data.chartData.heatmap;
+        const heatmap = cycleData.heatmap;
         const years = Object.keys(heatmap).sort();
         const yearLabels = years;
         const yearProfits = years.map(year => {
@@ -333,9 +306,9 @@ function createCharts(timing, data) {
 // Create Heatmap
 function createHeatmap(data) {
     const table = document.getElementById('heatmap-table');
-    if (!table || !data || !data.chartData || !data.chartData.heatmap) return;
+    if (!table || !data || !data.chartData || !data.chartData[currentCycle]) return;
     
-    const heatmapRaw = data.chartData.heatmap;
+    const heatmapRaw = data.chartData[currentCycle].heatmap;
     const years = Object.keys(heatmapRaw).sort((a,b)=>b-a);
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
@@ -375,6 +348,15 @@ async function renderDashboard(timing) {
     createCharts(timing, data);
     createHeatmap(data);
 }
+
+// Global Switch Cycle
+window.switchCycle = function(cycle) {
+    currentCycle = cycle;
+    document.querySelectorAll('.cycle-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cycle === cycle);
+    });
+    renderDashboard(currentTiming);
+};
 
 // Tab Switching (Simplified)
 document.querySelectorAll('.tab-btn').forEach(btn => {
