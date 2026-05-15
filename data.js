@@ -1,14 +1,26 @@
 window.ATM_DATA = {
   "11:00 AM": {
     "metrics": {
-      "grossProfit": 1478990.5,
-      "transactionCost": 379333.11,
-      "netProfit": 1099657.39,
-      "maxDrawdownRupees": -29696.28,
-      "winRate": 62.87,
-      "netPoints": 16959.29,
-      "maxDrawdownPoints": -456.87,
-      "maxDrawdown": -29696.28
+      "c1": {
+        "grossProfit": 1478990.5,
+        "transactionCost": 379333.11,
+        "netProfit": 1099657.39,
+        "maxDrawdownRupees": -29696.28,
+        "winRate": 62.87,
+        "netPoints": 16917.81,
+        "maxDrawdownPoints": -456.87,
+        "maxDrawdown": -29696.28
+      },
+      "all": {
+        "grossProfit": 1490836.75,
+        "transactionCost": 388483.02,
+        "netProfit": 1102353.73,
+        "maxDrawdownRupees": -38186.48,
+        "winRate": 62.98,
+        "netPoints": 16959.29,
+        "maxDrawdownPoints": -587.48,
+        "maxDrawdown": -38186.48
+      }
     },
     "chartData": {
       "labels": [

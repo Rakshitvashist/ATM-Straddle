@@ -7,7 +7,8 @@ const COMPARISON_FILE = 'comparsion_file.xlsx';
 const columnMapping = {
     '11:00 AM': { 
         metricCol: 6, 
-        valCol: 7, 
+        c1Col: 7, 
+        allCol: 8,
         dataFile: 'results20percent1100AM.xlsx',
         pointsFile: 'results20percent1100AM_points.xlsx'
     }
@@ -24,27 +25,36 @@ function getMetricsData(timing) {
     const sheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
 
-    const metrics = {};
+    const metrics = {
+        c1: {},
+        all: {}
+    };
+    
     const metricCol = mapping.metricCol;
-    const valCol = mapping.valCol;
 
     data.forEach(row => {
         const metricName = row[metricCol] ? String(row[metricCol]).trim() : '';
-        const value = row[valCol];
+        
+        const processMetric = (target, valCol) => {
+            const value = row[valCol];
+            if (metricName === 'Total Net Profit') target.netProfit = value;
+            if (metricName === 'Total Gross Profit') target.grossProfit = value;
+            if (metricName === 'Max Drawdown (Rupees)') target.maxDrawdownRupees = value;
+            if (metricName === 'Max Drawdown (Points)') target.maxDrawdownPoints = value;
+            if (metricName.includes('Winning Days')) target.winDays = value;
+            if (metricName.includes('Losing Days')) target.lossDays = value;
+            if (metricName.includes('Total Transaction Cost')) target.transactionCost = value;
+            if (metricName === 'Win Rate %') target.winRate = value;
+            if (metricName === 'Total Net Points Captured') target.netPoints = value;
+        };
 
-        if (metricName === 'Total Net Profit') metrics.netProfit = value;
-        if (metricName === 'Total Gross Profit') metrics.grossProfit = value;
-        if (metricName === 'Max Drawdown (Rupees)') metrics.maxDrawdownRupees = value;
-        if (metricName === 'Max Drawdown (Points)') metrics.maxDrawdownPoints = value;
-        if (metricName.includes('Winning Days')) metrics.winDays = value;
-        if (metricName.includes('Losing Days')) metrics.lossDays = value;
-        if (metricName.includes('Total Transaction Cost')) metrics.transactionCost = value;
-        if (metricName === 'Win Rate %') metrics.winRate = value;
-        if (metricName === 'Total Net Points Captured') metrics.netPoints = value;
+        processMetric(metrics.c1, mapping.c1Col);
+        processMetric(metrics.all, mapping.allCol);
     });
 
     // Ensure we have a default maxDrawdown for backward compatibility in the UI if needed
-    metrics.maxDrawdown = metrics.maxDrawdownRupees || metrics.maxDrawdownPoints;
+    metrics.c1.maxDrawdown = metrics.c1.maxDrawdownRupees || metrics.c1.maxDrawdownPoints;
+    metrics.all.maxDrawdown = metrics.all.maxDrawdownRupees || metrics.all.maxDrawdownPoints;
 
     // Also get points from the specific points file if it exists
     if (mapping.pointsFile && fs.existsSync(mapping.pointsFile)) {
@@ -52,7 +62,7 @@ function getMetricsData(timing) {
         const pointsData = xlsx.utils.sheet_to_json(pointsWb.Sheets[pointsWb.SheetNames[0]]);
         if (pointsData.length > 0) {
             const lastRow = pointsData[pointsData.length - 1];
-            metrics.netPoints = lastRow.Cum_Net_Points_All || 0;
+            metrics.all.netPoints = lastRow.Cum_Net_Points_All || 0;
         }
     }
 
