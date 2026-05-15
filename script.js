@@ -135,6 +135,8 @@ function updateKPICards(data) {
             </div>
         </div>
     `).join('');
+}
+
 // Create Charts
 function createCharts(timing, data) {
     // Destroy existing charts
