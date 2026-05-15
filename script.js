@@ -78,72 +78,70 @@ function updateKPICards(data) {
     const kpiGrid = document.getElementById('kpi-grid');
     if (!kpiGrid || !data || !data.metrics) return;
 
-    const metrics = data.metrics;
+    const all = data.metrics.all || {};
+    const c1 = data.metrics.c1 || {};
 
-    // Fallback logic for derived metrics if not strictly present
-    const total_net_profit = metrics.netProfit || 0;
-    const max_drawdown = metrics.maxDrawdown || 0;
-    const win_rate = metrics.winRate !== undefined ? metrics.winRate : (metrics.winDays / (metrics.winDays + metrics.lossDays) * 100) || 0;
-    const avg_daily_pnl = total_net_profit / (metrics.winDays + metrics.lossDays || 1);
-
+    // Helper to calculate win rate
+    const getWinRate = (m) => m.winRate !== undefined ? m.winRate : (m.winDays / (m.winDays + m.lossDays) * 100) || 0;
+    
     const kpis = [
         {
-            label: 'Total Net Profit',
-            value: total_net_profit,
+            label: 'Total Net Profit (All)',
+            value: all.netProfit || 0,
             icon: 'fa-wallet',
             format: 'currency',
-            change: (metrics.netPoints ? metrics.netPoints.toFixed(2) + ' Points' : 'Overall PnL')
+            change: (all.netPoints ? all.netPoints.toFixed(2) + ' Points' : 'All Cycles PnL')
         },
         {
-            label: 'Total Gross Profit',
-            value: metrics.grossProfit || 0,
-            icon: 'fa-chart-line',
+            label: 'Total Net Profit (C1)',
+            value: c1.netProfit || 0,
+            icon: 'fa-wallet',
             format: 'currency',
-            change: 'Before Cost'
+            change: (c1.netPoints ? c1.netPoints.toFixed(2) + ' Points' : 'Single Cycle PnL')
         },
         {
-            label: 'Max Drawdown',
-            value: metrics.maxDrawdownRupees || max_drawdown,
+            label: 'Max Drawdown (All)',
+            value: all.maxDrawdownRupees || all.maxDrawdown || 0,
             icon: 'fa-arrow-down',
             format: 'currency',
-            change: (metrics.maxDrawdownPoints ? metrics.maxDrawdownPoints.toFixed(2) + ' Points' : 'Max Peak to Trough'),
+            change: (all.maxDrawdownPoints ? all.maxDrawdownPoints.toFixed(2) + ' Points' : 'Max DD All'),
             negative: true
         },
         {
-            label: 'Win Rate',
-            value: win_rate,
+            label: 'Max Drawdown (C1)',
+            value: c1.maxDrawdownRupees || c1.maxDrawdown || 0,
+            icon: 'fa-arrow-down',
+            format: 'currency',
+            change: (c1.maxDrawdownPoints ? c1.maxDrawdownPoints.toFixed(2) + ' Points' : 'Max DD Single'),
+            negative: true
+        },
+        {
+            label: 'Win Rate (All)',
+            value: getWinRate(all),
             icon: 'fa-percentage',
             format: 'percent',
-            change: (metrics.winDays || 0) + ' Win Days'
+            change: (all.winDays || 0) + ' Win Days'
         },
         {
-            label: 'Avg Daily PnL',
-            value: avg_daily_pnl,
+            label: 'Win Rate (C1)',
+            value: getWinRate(c1),
+            icon: 'fa-percentage',
+            format: 'percent',
+            change: (c1.winDays || 0) + ' Win Days'
+        },
+        {
+            label: 'Avg Daily PnL (All)',
+            value: (all.netProfit || 0) / (all.winDays + all.lossDays || 1),
             icon: 'fa-calendar-day',
             format: 'currency',
-            change: 'Per Trading Day'
+            change: 'Overall Avg'
         },
         {
-            label: 'Total Net Points',
-            value: metrics.netPoints || 0,
+            label: 'Total Net Points (All)',
+            value: all.netPoints || 0,
             icon: 'fa-bullseye',
             format: 'decimal',
-            change: 'Points Captured'
-        },
-        {
-            label: 'Estimated Capital',
-            value: 1000000,
-            icon: 'fa-money-bill',
-            format: 'currency',
-            change: 'Initial Required'
-        },
-        {
-            label: 'Transaction Cost',
-            value: metrics.transactionCost || 0,
-            icon: 'fa-exchange-alt',
-            format: 'currency',
-            change: 'Total Cost',
-            negative: true
+            change: 'Captured Points'
         }
     ];
 
