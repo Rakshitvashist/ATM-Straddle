@@ -145,35 +145,53 @@ function createCharts(timing, data) {
 
     if (!data || !data.chartData) return;
     
-    // Get data for selected cycle
-    const cycleData = data.chartData[currentCycle];
-    if (!cycleData || !data.chartData.labels) return;
+    // Labels for the timeline
+    const labels = data.chartData.labels || [];
+    if (labels.length === 0) return;
 
-    // Equity Curve Chart
+    // Equity Curve Chart (Showing BOTH for Comparison)
     const equityCtxEl = document.getElementById('equityChart');
     if (equityCtxEl) {
         const equityCtx = equityCtxEl.getContext('2d');
         charts.equity = new Chart(equityCtx, {
             type: 'line',
             data: {
-                labels: data.chartData.labels,
-                datasets: [{
-                    label: `${timing} (${currentCycle.toUpperCase()}) PnL`,
-                    data: cycleData.pnlData,
-                    borderColor: 'rgba(0, 240, 255, 1)',
-                    backgroundColor: 'rgba(0, 240, 255, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.1,
-                    pointRadius: 0,
-                    pointHoverRadius: 6
-                }]
+                labels: labels,
+                datasets: [
+                    {
+                        label: `All Cycles PnL`,
+                        data: data.chartData.all.pnlData,
+                        borderColor: 'rgba(0, 240, 255, 1)',
+                        backgroundColor: 'rgba(0, 240, 255, 0.05)',
+                        borderWidth: 2,
+                        fill: currentCycle === 'all',
+                        tension: 0.1,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        hidden: false
+                    },
+                    {
+                        label: `Cycle 1 PnL`,
+                        data: data.chartData.c1.pnlData,
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                        borderWidth: 2,
+                        fill: currentCycle === 'c1',
+                        tension: 0.1,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        hidden: false
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: { 
+                        display: true, 
+                        labels: { color: '#94a3b8', font: { size: 10 } } 
+                    },
                     tooltip: {
                         mode: 'index',
                         intersect: false,
@@ -183,9 +201,9 @@ function createCharts(timing, data) {
                         borderColor: 'rgba(0, 240, 255, 0.3)',
                         borderWidth: 1,
                         padding: 12,
-                        displayColors: false,
+                        displayColors: true,
                         callbacks: {
-                            label: (context) => 'PnL: ' + formatNumber(context.parsed.y)
+                            label: (context) => context.dataset.label + ': ' + formatNumber(context.parsed.y)
                         }
                     }
                 },
@@ -203,7 +221,7 @@ function createCharts(timing, data) {
                     }
                 },
                 interaction: {
-                    mode: 'nearest',
+                    mode: 'index',
                     axis: 'x',
                     intersect: false
                 }
@@ -211,16 +229,17 @@ function createCharts(timing, data) {
         });
     }
 
-    // Drawdown Chart
+    // Drawdown Chart (Selected Cycle)
+    const cycleData = data.chartData[currentCycle];
     const drawdownCtxEl = document.getElementById('drawdownChart');
-    if (drawdownCtxEl && cycleData.drawdownData) {
+    if (drawdownCtxEl && cycleData && cycleData.drawdownData) {
         const drawdownCtx = drawdownCtxEl.getContext('2d');
         charts.drawdown = new Chart(drawdownCtx, {
             type: 'line',
             data: {
-                labels: data.chartData.labels,
+                labels: labels,
                 datasets: [{
-                    label: 'Drawdown',
+                    label: `Drawdown (${currentCycle.toUpperCase()})`,
                     data: cycleData.drawdownData,
                     borderColor: 'rgba(239, 68, 68, 1)',
                     backgroundColor: 'rgba(239, 68, 68, 0.2)',
@@ -234,7 +253,7 @@ function createCharts(timing, data) {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: { display: true, labels: { color: '#94a3b8' } },
                     tooltip: {
                         mode: 'index',
                         intersect: false,
@@ -257,13 +276,12 @@ function createCharts(timing, data) {
         });
     }
 
-    // Yearly Bar Chart
+    // Yearly Bar Chart (Selected Cycle)
     const monthlyCtxEl = document.getElementById('monthlyBarChart');
-    if (monthlyCtxEl && cycleData.heatmap) {
+    if (monthlyCtxEl && cycleData && cycleData.heatmap) {
         const monthlyCtx = monthlyCtxEl.getContext('2d');
         const heatmap = cycleData.heatmap;
         const years = Object.keys(heatmap).sort();
-        const yearLabels = years;
         const yearProfits = years.map(year => {
             return Object.values(heatmap[year]).reduce((a, b) => a + b, 0);
         });
@@ -271,9 +289,9 @@ function createCharts(timing, data) {
         charts.monthly = new Chart(monthlyCtx, {
             type: 'bar',
             data: {
-                labels: yearLabels,
+                labels: years,
                 datasets: [{
-                    label: 'Yearly PnL',
+                    label: `Yearly PnL (${currentCycle.toUpperCase()})`,
                     data: yearProfits,
                     backgroundColor: yearProfits.map(p => p >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)'),
                     borderColor: yearProfits.map(p => p >= 0 ? '#10b981' : '#ef4444'),
@@ -284,7 +302,7 @@ function createCharts(timing, data) {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: { display: true, labels: { color: '#94a3b8' } },
                     tooltip: {
                         callbacks: {
                             label: (context) => 'Total: ' + formatNumber(context.parsed.y)
@@ -310,11 +328,13 @@ function createHeatmap(data) {
     const table = document.getElementById('heatmap-table');
     if (!table || !data || !data.chartData || !data.chartData[currentCycle]) return;
     
+    const cycleLabel = currentCycle === 'all' ? 'All Cycles' : 'Cycle 1';
+    
     const heatmapRaw = data.chartData[currentCycle].heatmap;
     const years = Object.keys(heatmapRaw).sort((a,b)=>b-a);
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
-    let thead = `<thead><tr><th>Year</th>${months.map(m=>`<th>${m}</th>`).join('')}<th>YTD</th></tr></thead>`;
+    let thead = `<thead><tr><th>Year (${cycleLabel})</th>${months.map(m=>`<th>${m}</th>`).join('')}<th>YTD</th></tr></thead>`;
     let tbody = `<tbody>`;
     
     years.forEach(year => {
